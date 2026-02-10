@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Build dylib (Debug)",
+            "type": "shell",
+            "command": "make -f Makefile.clang debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "name": "Build dylib (Release)",
+            "type": "shell",
+            "command": "make -f Makefile.clang release",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "name": "Clean build",
+            "type": "shell",
+            "command": "make -f Makefile.clang clean",
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}

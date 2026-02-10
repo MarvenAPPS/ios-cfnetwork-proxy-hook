@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "iOS arm64 Clang",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/include"
+            ],
+            "defines": [
+                "DEBUG=1"
+            ],
+            "macFrameworkPath": [
+                "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}
