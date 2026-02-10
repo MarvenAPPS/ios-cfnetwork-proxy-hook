@@ -41,7 +41,29 @@
     if (_floatingButton) return;
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
+        UIWindow *keyWindow = nil;
+        
+        // iOS 13+ compatible way to get key window
+        if (@available(iOS 13.0, *)) {
+            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    UIWindowScene *windowScene = (UIWindowScene *)scene;
+                    for (UIWindow *window in windowScene.windows) {
+                        if (window.isKeyWindow) {
+                            keyWindow = window;
+                            break;
+                        }
+                    }
+                    if (keyWindow) break;
+                }
+            }
+        }
+        
+        // Fallback for older iOS
+        if (!keyWindow) {
+            keyWindow = [[UIApplication sharedApplication] delegate].window;
+        }
+        
         if (!keyWindow) {
             NSLog(@"[ProxyHook] No keyWindow found; delaying floating button attach");
             [[NSNotificationCenter defaultCenter] addObserver:self
@@ -71,7 +93,7 @@
                               56.0);
 
     _floatingButton = [[FloatingButton alloc] initWithFrame:frame];
-    __weak typeof(self) weakSelf = self;
+    ProxyManager __weak *weakSelf = self;
     _floatingButton.toggleChanged = ^(BOOL enabled) {
         [weakSelf toggleProxy:enabled];
     };
