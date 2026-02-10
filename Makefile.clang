@@ -1,29 +1,27 @@
 # Makefile for direct clang builds without Theos
 
-SDK_PATH = $(shell xcrun --sdk iphoneos --show-sdk-path)
-CC = $(shell xcrun --sdk iphoneos --find clang++)
+SDK_PATH := $(shell xcrun --sdk iphoneos --show-sdk-path)
+CC := $(shell xcrun --sdk iphoneos --find clang++)
 
-SRC_DIR = src
-BUILD_DIR = build
+SRC_DIR := src
+BUILD_DIR := build
 
-SOURCES = \
+SOURCES := \
     $(SRC_DIR)/main.mm \
     $(SRC_DIR)/ProxyManager.mm \
     $(SRC_DIR)/FloatingButton.mm \
-    $(SRC_DIR)/ProxySettingsViewController.mm \
     $(SRC_DIR)/CFNetworkHooks.mm
 
-HEADERS = \
+HEADERS := \
     $(SRC_DIR)/ProxyManager.h \
     $(SRC_DIR)/FloatingButton.h \
-    $(SRC_DIR)/ProxySettingsViewController.h \
     $(SRC_DIR)/CFNetworkHooks.h
 
-TARGET = $(BUILD_DIR)/libProxyHook.dylib
+TARGET := $(BUILD_DIR)/libProxyHook.dylib
 
-FRAMEWORKS = -framework CoreFoundation -framework Foundation -framework UIKit -framework CFNetwork
+FRAMEWORKS := -framework CoreFoundation -framework Foundation -framework UIKit -framework CFNetwork
 
-CFLAGS = \
+CFLAGS := \
     -arch arm64 \
     -arch arm64e \
     -isysroot $(SDK_PATH) \
@@ -31,16 +29,24 @@ CFLAGS = \
     -fobjc-arc \
     -std=c++11 \
     -fvisibility=hidden \
-    -I./include
+    -I./include \
+    -I$(SRC_DIR)
 
-LDFLAGS = \
+LDFLAGS := \
     -dynamiclib \
     -undefined dynamic_lookup \
     -install_name @rpath/libProxyHook.dylib \
     $(FRAMEWORKS)
 
-DEBUG_CFLAGS = -g -O0 -DDEBUG=1
-RELEASE_CFLAGS = -O3 -DNDEBUG
+DEBUG_CFLAGS := -g -O0 -DDEBUG=1
+RELEASE_CFLAGS := -O3 -DNDEBUG
+
+# Object files - explicit mapping
+OBJS := \
+    $(BUILD_DIR)/main.o \
+    $(BUILD_DIR)/ProxyManager.o \
+    $(BUILD_DIR)/FloatingButton.o \
+    $(BUILD_DIR)/CFNetworkHooks.o
 
 .PHONY: all clean debug release dirs
 
@@ -49,14 +55,25 @@ all: release
 dirs:
 	@mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.mm $(HEADERS)
+# Explicit rules for each object file
+$(BUILD_DIR)/main.o: $(SRC_DIR)/main.mm $(HEADERS)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-SOURCES_OBJ = $(SOURCES:$(SRC_DIR)/%.mm=$(BUILD_DIR)/%.o)
+$(BUILD_DIR)/ProxyManager.o: $(SRC_DIR)/ProxyManager.mm $(HEADERS)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGET): dirs $(SOURCES_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(SOURCES_OBJ) -o $@
+$(BUILD_DIR)/FloatingButton.o: $(SRC_DIR)/FloatingButton.mm $(HEADERS)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/CFNetworkHooks.o: $(SRC_DIR)/CFNetworkHooks.mm $(HEADERS)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TARGET): dirs $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
 	@echo "✓ Built: $@"
 	@file $@
 
