@@ -1,0 +1,70 @@
+# Makefile for direct clang builds without Theos
+
+SDK_PATH = $(shell xcrun --sdk iphoneos --show-sdk-path)
+CC = $(shell xcrun --sdk iphoneos --find clang++)
+
+SRC_DIR = src
+BUILD_DIR = build
+
+SOURCES = \
+    $(SRC_DIR)/main.mm \
+    $(SRC_DIR)/ProxyManager.mm \
+    $(SRC_DIR)/FloatingButton.mm \
+    $(SRC_DIR)/ProxySettingsViewController.mm \
+    $(SRC_DIR)/CFNetworkHooks.mm
+
+HEADERS = \
+    $(SRC_DIR)/ProxyManager.h \
+    $(SRC_DIR)/FloatingButton.h \
+    $(SRC_DIR)/ProxySettingsViewController.h \
+    $(SRC_DIR)/CFNetworkHooks.h
+
+TARGET = $(BUILD_DIR)/libProxyHook.dylib
+
+FRAMEWORKS = -framework CoreFoundation -framework Foundation -framework UIKit -framework CFNetwork
+
+CFLAGS = \
+    -arch arm64 \
+    -arch arm64e \
+    -isysroot $(SDK_PATH) \
+    -mios-version-min=15.0 \
+    -fobjc-arc \
+    -std=c++11 \
+    -fvisibility=hidden \
+    -I./include
+
+LDFLAGS = \
+    -dynamiclib \
+    -undefined dynamic_lookup \
+    -install_name @rpath/libProxyHook.dylib \
+    $(FRAMEWORKS)
+
+DEBUG_CFLAGS = -g -O0 -DDEBUG=1
+RELEASE_CFLAGS = -O3 -DNDEBUG
+
+.PHONY: all clean debug release dirs
+
+all: release
+
+dirs:
+	@mkdir -p $(BUILD_DIR)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.mm $(HEADERS)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+SOURCES_OBJ = $(SOURCES:$(SRC_DIR)/%.mm=$(BUILD_DIR)/%.o)
+
+$(TARGET): dirs $(SOURCES_OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SOURCES_OBJ) -o $@
+	@echo "✓ Built: $@"
+	@file $@
+
+debug: CFLAGS += $(DEBUG_CFLAGS)
+debug: $(TARGET)
+
+release: CFLAGS += $(RELEASE_CFLAGS)
+release: $(TARGET)
+
+clean:
+	rm -rf $(BUILD_DIR)
